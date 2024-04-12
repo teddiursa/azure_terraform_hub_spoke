@@ -6,4 +6,4 @@ terraform*
 
 secret.tfvars
 secret*
-logs
+*.log

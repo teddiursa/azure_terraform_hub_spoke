@@ -13,6 +13,12 @@ resource "azurerm_virtual_network" "office_network" {
   depends_on          = [azurerm_resource_group.office_rg]
 }
 
+
+resource "time_sleep" "office_delay" {
+  create_duration = "5s"
+}
+
+
 # Gateway Subnet
 # Name needs to be exactly "GatewaySubnet" for vpn gateway config
 resource "azurerm_subnet" "office_gateway_subnet" {
@@ -20,7 +26,7 @@ resource "azurerm_subnet" "office_gateway_subnet" {
   resource_group_name  = azurerm_resource_group.office_rg.name
   virtual_network_name = azurerm_virtual_network.office_network.name
   address_prefixes     = ["192.168.255.224/27"]
-  depends_on           = [azurerm_virtual_network.office_network]
+  depends_on           = [azurerm_virtual_network.office_network,azurerm_resource_group.office_rg]
 }
 
 # Subnet 2
@@ -29,7 +35,7 @@ resource "azurerm_subnet" "office_mgmt_subnet" {
   resource_group_name  = azurerm_resource_group.office_rg.name
   virtual_network_name = azurerm_virtual_network.office_network.name
   address_prefixes     = ["192.168.1.128/25"]
-  depends_on           = [azurerm_virtual_network.office_network]
+  depends_on           = [azurerm_virtual_network.office_network,azurerm_resource_group.office_rg]
 }
 
 # Subnet 3
@@ -38,7 +44,7 @@ resource "azurerm_subnet" "office_user_subnet" {
   resource_group_name  = azurerm_resource_group.office_rg.name
   virtual_network_name = azurerm_virtual_network.office_network.name
   address_prefixes     = ["192.168.10.0/24"]
-  depends_on           = [azurerm_virtual_network.office_network]
+  depends_on           = [azurerm_virtual_network.office_network,azurerm_resource_group.office_rg]
 }
 
 
@@ -64,10 +70,6 @@ resource "azurerm_network_interface" "office_nic_1" {
     public_ip_address_id          = azurerm_public_ip.office_vm_public_ip.id
   }
   depends_on = [azurerm_public_ip.office_vm_public_ip, azurerm_subnet.office_mgmt_subnet]
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 # Create Network Security Group and rule
@@ -143,10 +145,14 @@ resource "azurerm_public_ip" "office_public_ip" {
   name                = "office-public-ip"
   resource_group_name = azurerm_resource_group.office_rg.name
   location            = azurerm_resource_group.office_rg.location
-  allocation_method   = "Dynamic"
+  allocation_method   = "Static"
   sku                 = "Standard"
   tags                = { environment = "Office public ip" }
   depends_on          = [azurerm_resource_group.office_rg]
+}
+
+resource "time_sleep" "office_vpn_delay" {
+  create_duration = "5s"
 }
 
 resource "azurerm_virtual_network_gateway" "office_vpn_gateway" {
@@ -168,9 +174,4 @@ resource "azurerm_virtual_network_gateway" "office_vpn_gateway" {
     subnet_id                     = azurerm_subnet.office_gateway_subnet.id
   }
   depends_on = [azurerm_public_ip.office_public_ip, azurerm_subnet.office_gateway_subnet]
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
 }

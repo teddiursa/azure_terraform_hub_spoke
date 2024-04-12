@@ -18,6 +18,10 @@ resource "azurerm_virtual_network" "hub_vnet" {
   depends_on = [azurerm_resource_group.hub_net_rg]
 }
 
+resource "time_sleep" "hub_delay" {
+  create_duration = "5s"
+}
+
 resource "azurerm_subnet" "hub_gateway_subnet" {
   name                 = "GatewaySubnet"
   resource_group_name  = azurerm_resource_group.hub_net_rg.name
@@ -115,11 +119,16 @@ resource "azurerm_public_ip" "hub_public_ip" {
   name                = "hub-public-ip"
   resource_group_name = azurerm_resource_group.hub_net_rg.name
   location            = azurerm_resource_group.hub_net_rg.location
-  allocation_method   = "Dynamic"
+  allocation_method   = "Static"
   sku                 = "Standard"
   tags                = { environment = "Office pip" }
   depends_on          = [azurerm_resource_group.hub_net_rg]
 }
+
+resource "time_sleep" "hub_vpn_delay" {
+  create_duration = "3s"
+}
+
 
 resource "azurerm_virtual_network_gateway" "hub_vnet_gateway" {
   name                = "hub-vpn-gateway1"
@@ -141,9 +150,6 @@ resource "azurerm_virtual_network_gateway" "hub_vnet_gateway" {
   }
   depends_on = [azurerm_public_ip.hub_public_ip, azurerm_subnet.hub_gateway_subnet]
 
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "azurerm_virtual_network_gateway_connection" "hub_office_conn" {

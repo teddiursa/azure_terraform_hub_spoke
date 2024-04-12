@@ -114,6 +114,11 @@ resource "azurerm_route_table" "hub_gateway_rt" {
   depends_on = [azurerm_resource_group.hub_apps_rg]
 }
 
+resource "time_sleep" "hub_rt_delay" {
+  create_duration = "3s"
+}
+
+
 resource "azurerm_subnet_route_table_association" "hub_gateway_rt_hub_vnet_gateway_subnet" {
   subnet_id      = azurerm_subnet.hub_gateway_subnet.id
   route_table_id = azurerm_route_table.hub_gateway_rt.id
