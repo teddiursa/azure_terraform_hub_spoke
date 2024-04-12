@@ -116,6 +116,7 @@ resource "azurerm_public_ip" "hub_public_ip" {
   resource_group_name = azurerm_resource_group.hub_net_rg.name
   location            = azurerm_resource_group.hub_net_rg.location
   allocation_method   = "Dynamic"
+  sku                 = "Standard"
   tags                = { environment = "Office pip" }
   depends_on          = [azurerm_resource_group.hub_net_rg]
 }
@@ -139,6 +140,10 @@ resource "azurerm_virtual_network_gateway" "hub_vnet_gateway" {
     subnet_id                     = azurerm_subnet.hub_gateway_subnet.id
   }
   depends_on = [azurerm_public_ip.hub_public_ip, azurerm_subnet.hub_gateway_subnet]
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "azurerm_virtual_network_gateway_connection" "hub_office_conn" {

@@ -64,6 +64,10 @@ resource "azurerm_network_interface" "office_nic_1" {
     public_ip_address_id          = azurerm_public_ip.office_vm_public_ip.id
   }
   depends_on = [azurerm_public_ip.office_vm_public_ip, azurerm_subnet.office_mgmt_subnet]
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Create Network Security Group and rule
@@ -140,6 +144,7 @@ resource "azurerm_public_ip" "office_public_ip" {
   resource_group_name = azurerm_resource_group.office_rg.name
   location            = azurerm_resource_group.office_rg.location
   allocation_method   = "Dynamic"
+  sku                 = "Standard"
   tags                = { environment = "Office public ip" }
   depends_on          = [azurerm_resource_group.office_rg]
 }
@@ -163,5 +168,9 @@ resource "azurerm_virtual_network_gateway" "office_vpn_gateway" {
     subnet_id                     = azurerm_subnet.office_gateway_subnet.id
   }
   depends_on = [azurerm_public_ip.office_public_ip, azurerm_subnet.office_gateway_subnet]
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
 }
