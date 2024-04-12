@@ -1,5 +1,6 @@
 TODO
 .terraform/
 .terraform*
+terraform*
 secret.tfvars
 secret*

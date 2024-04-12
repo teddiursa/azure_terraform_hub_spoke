@@ -28,11 +28,12 @@ resource "azurerm_network_interface" "hub_nva_nic" {
 }
 
 resource "azurerm_virtual_machine" "hub_nva_vm" {
-  name                  = "hub-nva-vm"
-  resource_group_name   = azurerm_resource_group.hub_apps_rg.name
-  location              = azurerm_resource_group.hub_apps_rg.location
-  network_interface_ids = [azurerm_network_interface.hub_nva_nic.id]
-  vm_size               = var.vmsize
+  name                             = "hub-nva-vm"
+  resource_group_name              = azurerm_resource_group.hub_apps_rg.name
+  location                         = azurerm_resource_group.hub_apps_rg.location
+  network_interface_ids            = [azurerm_network_interface.hub_nva_nic.id]
+  vm_size                          = var.vmsize
+  delete_os_disk_on_termination = true
 
   storage_image_reference {
     publisher = "Canonical"
@@ -100,12 +101,12 @@ resource "azurerm_route_table" "hub_gateway_rt" {
     next_hop_in_ip_address = "10.0.0.36"
   }
 
-  #   route {
-  #     name                   = "toSpoke2"
-  #     address_prefix         = "10.2.0.0/16"
-  #     next_hop_type          = "VirtualAppliance"
-  #     next_hop_in_ip_address = "10.0.0.36"
-  #   }
+  route {
+    name                   = "toSpoke2"
+    address_prefix         = "10.2.0.0/16"
+    next_hop_type          = "VirtualAppliance"
+    next_hop_in_ip_address = "10.0.0.36"
+  }
 
   tags = {
     environment = "hub-nva"
@@ -115,7 +116,7 @@ resource "azurerm_route_table" "hub_gateway_rt" {
 resource "azurerm_subnet_route_table_association" "hub_gateway_rt_hub_vnet_gateway_subnet" {
   subnet_id      = azurerm_subnet.hub_gateway_subnet.id
   route_table_id = azurerm_route_table.hub_gateway_rt.id
-  depends_on     = [azurerm_subnet.hub_gateway_subnet]
+  depends_on     = [azurerm_subnet.hub_gateway_subnet, azurerm_route_table.hub_gateway_rt]
 }
 
 resource "azurerm_route_table" "spoke1_rt" {
@@ -124,12 +125,12 @@ resource "azurerm_route_table" "spoke1_rt" {
   location                      = azurerm_resource_group.hub_apps_rg.location
   disable_bgp_route_propagation = false
 
-  #   route {
-  #     name                   = "toSpoke2"
-  #     address_prefix         = "10.2.0.0/16"
-  #     next_hop_type          = "VirtualAppliance"
-  #     next_hop_in_ip_address = "10.0.0.36"
-  #   }
+  route {
+    name                   = "toSpoke2"
+    address_prefix         = "10.2.0.0/16"
+    next_hop_type          = "VirtualAppliance"
+    next_hop_in_ip_address = "10.0.0.36"
+  }
 
   route {
     name           = "default"
@@ -154,40 +155,38 @@ resource "azurerm_subnet_route_table_association" "spoke1_rt_spoke1_vnet_workloa
   depends_on     = [azurerm_subnet.spoke1_workload]
 }
 
-# Due to vCPU restrictions, I removed the spok2 network
+resource "azurerm_route_table" "spoke2_rt" {
+  name                          = "spoke2-rt"
+  location                      = azurerm_resource_group.hub_apps_rg.location
+  resource_group_name           = azurerm_resource_group.hub_apps_rg.name
+  disable_bgp_route_propagation = false
 
-# resource "azurerm_route_table" "spoke2_rt" {
-#   name                          = "spoke2-rt"
-#   location                      = azurerm_resource_group.hub_apps_rg.location
-#   resource_group_name           = azurerm_resource_group.hub_apps_rg.name
-#   disable_bgp_route_propagation = false
+  route {
+    name                   = "toSpoke1"
+    address_prefix         = "10.1.0.0/16"
+    next_hop_in_ip_address = "10.0.0.36"
+    next_hop_type          = "VirtualAppliance"
+  }
 
-#   route {
-#     name                   = "toSpoke1"
-#     address_prefix         = "10.1.0.0/16"
-#     next_hop_in_ip_address = "10.0.0.36"
-#     next_hop_type          = "VirtualAppliance"
-#   }
+  route {
+    name           = "default"
+    address_prefix = "0.0.0.0/0"
+    next_hop_type  = "VnetLocal"
+  }
 
-#   route {
-#     name           = "default"
-#     address_prefix = "0.0.0.0/0"
-#     next_hop_type  = "VnetLocal"
-#   }
+  tags = {
+    environment = "hub-nva"
+  }
+}
 
-#   tags = {
-#     environment = "hub-nva"
-#   }
-# }
+resource "azurerm_subnet_route_table_association" "spoke2_rt_spoke2_vnet_mgmt" {
+  subnet_id      = azurerm_subnet.spoke2_mgmt.id
+  route_table_id = azurerm_route_table.spoke2_rt.id
+  depends_on     = [azurerm_subnet.spoke2_mgmt]
+}
 
-# resource "azurerm_subnet_route_table_association" "spoke2_rt_spoke2_vnet_mgmt" {
-#   subnet_id      = azurerm_subnet.spoke2_mgmt.id
-#   route_table_id = azurerm_route_table.spoke2_rt.id
-#   depends_on     = [azurerm_subnet.spoke2_mgmt]
-# }
-
-# resource "azurerm_subnet_route_table_association" "spoke2_rt_spoke2_vnet_workload" {
-#   subnet_id      = azurerm_subnet.spoke2_workload.id
-#   route_table_id = azurerm_route_table.spoke2_rt.id
-#   depends_on     = [azurerm_subnet.spoke2_workload]
-# }
+resource "azurerm_subnet_route_table_association" "spoke2_rt_spoke2_vnet_workload" {
+  subnet_id      = azurerm_subnet.spoke2_workload.id
+  route_table_id = azurerm_route_table.spoke2_rt.id
+  depends_on     = [azurerm_subnet.spoke2_workload]
+}

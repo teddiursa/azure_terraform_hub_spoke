@@ -38,68 +38,70 @@ resource "azurerm_subnet" "hub_dmz" {
   address_prefixes     = ["10.0.0.32/27"]
 }
 
-resource "azurerm_network_interface" "hub_nic" {
-  name                 = "hub-nic"
-  resource_group_name  = azurerm_resource_group.hub_net_rg.name
-  location             = azurerm_resource_group.hub_net_rg.location
-  enable_ip_forwarding = true
+# Due to vCPU restrictions, I removed the hub vm
 
-  ip_configuration {
-    name                          = "hub"
-    subnet_id                     = azurerm_subnet.hub_mgmt.id
-    private_ip_address_allocation = "Dynamic"
-  }
+# resource "azurerm_network_interface" "hub_nic" {
+#   name                 = "hub-nic"
+#   resource_group_name  = azurerm_resource_group.hub_net_rg.name
+#   location             = azurerm_resource_group.hub_net_rg.location
+#   enable_ip_forwarding = true
 
-  depends_on = [
-    azurerm_subnet.hub_mgmt,
-    azurerm_resource_group.hub_net_rg,
-  ]
+#   ip_configuration {
+#     name                          = "hub"
+#     subnet_id                     = azurerm_subnet.hub_mgmt.id
+#     private_ip_address_allocation = "Dynamic"
+#   }
 
-  tags = {
-    environment = "hub"
-  }
-}
+#   depends_on = [
+#     azurerm_subnet.hub_mgmt,
+#     azurerm_resource_group.hub_net_rg,
+#   ]
 
-#Virtual Machine
-resource "azurerm_virtual_machine" "hub_vm" {
-  name                  = "hub-vm"
-  resource_group_name   = azurerm_resource_group.hub_net_rg.name
-  location              = azurerm_resource_group.hub_net_rg.location
-  network_interface_ids = [azurerm_network_interface.hub_nic.id]
-  vm_size               = var.vmsize
+#   tags = {
+#     environment = "hub"
+#   }
+# }
 
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "16.04-LTS"
-    version   = "latest"
-  }
+# resource "azurerm_virtual_machine" "hub_vm" {
+#   name                  = "hub-vm"
+#   resource_group_name   = azurerm_resource_group.hub_net_rg.name
+#   location              = azurerm_resource_group.hub_net_rg.location
+#   network_interface_ids = [azurerm_network_interface.hub_nic.id]
+#   vm_size               = var.vmsize
+#   delete_os_disk_on_termination = true
 
-  storage_os_disk {
-    name              = "myosdisk1"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
+#   storage_image_reference {
+#     publisher = "Canonical"
+#     offer     = "UbuntuServer"
+#     sku       = "16.04-LTS"
+#     version   = "latest"
+#   }
 
-  os_profile {
-    computer_name  = "hub-vm"
-    admin_username = "greg"
-    admin_password = var.azure_password
-  }
+#   storage_os_disk {
+#     name              = "myosdisk1"
+#     caching           = "ReadWrite"
+#     create_option     = "FromImage"
+#     managed_disk_type = "Standard_LRS"
+#   }
 
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
+#   os_profile {
+#     computer_name  = "hub-vm"
+#     admin_username = "greg"
+#     admin_password = var.azure_password
+#   }
 
-  depends_on = [
-    azurerm_network_interface.hub_nic,
-  ]
+#   os_profile_linux_config {
+#     disable_password_authentication = false
+#   }
 
-  tags = {
-    environment = "hub"
-  }
-}
+#   depends_on = [
+#     azurerm_network_interface.hub_nic,
+#   ]
+
+#   tags = {
+#     environment = "hub"
+#   }
+# }
 
 
 
@@ -131,7 +133,7 @@ resource "azurerm_virtual_network_gateway" "hub_vnet_gateway" {
     private_ip_address_allocation = "Dynamic"
     subnet_id                     = azurerm_subnet.hub_gateway_subnet.id
   }
-  depends_on = [azurerm_public_ip.hub_public_ip]
+  depends_on = [azurerm_public_ip.hub_public_ip, azurerm_subnet.hub_gateway_subnet]
 }
 
 resource "azurerm_virtual_network_gateway_connection" "hub_office_conn" {

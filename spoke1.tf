@@ -17,14 +17,14 @@ resource "azurerm_virtual_network" "spoke1_vnet" {
 
 resource "azurerm_subnet" "spoke1_mgmt" {
   name                 = "mgmt"
-  resource_group_name = azurerm_resource_group.spoke1_rg.name
+  resource_group_name  = azurerm_resource_group.spoke1_rg.name
   virtual_network_name = azurerm_virtual_network.spoke1_vnet.name
   address_prefixes     = ["10.1.0.64/27"]
 }
 
 resource "azurerm_subnet" "spoke1_workload" {
   name                 = "workload"
-  resource_group_name = azurerm_resource_group.spoke1_rg.name
+  resource_group_name  = azurerm_resource_group.spoke1_rg.name
   virtual_network_name = azurerm_virtual_network.spoke1_vnet.name
   address_prefixes     = ["10.1.1.0/24"]
 }
@@ -56,11 +56,12 @@ resource "azurerm_network_interface" "spoke1_nic" {
 }
 
 resource "azurerm_virtual_machine" "spoke1_vm" {
-  name                  = "spoke1-vm"
-  resource_group_name   = azurerm_resource_group.spoke1_rg.name
-  location              = azurerm_resource_group.spoke1_rg.location
-  network_interface_ids = [azurerm_network_interface.spoke1_nic.id]
-  vm_size               = var.vmsize
+  name                             = "spoke1-vm"
+  resource_group_name              = azurerm_resource_group.spoke1_rg.name
+  location                         = azurerm_resource_group.spoke1_rg.location
+  network_interface_ids            = [azurerm_network_interface.spoke1_nic.id]
+  vm_size                          = var.vmsize
+  delete_os_disk_on_termination = true
 
   storage_image_reference {
     publisher = "Canonical"

@@ -19,6 +19,7 @@ resource "azurerm_subnet" "office_gateway_subnet" {
   resource_group_name  = azurerm_resource_group.office_rg.name
   virtual_network_name = azurerm_virtual_network.office_network.name
   address_prefixes     = ["192.168.255.224/27"]
+  depends_on           = [azurerm_virtual_network.office_network]
 }
 
 # Subnet 2
@@ -27,6 +28,7 @@ resource "azurerm_subnet" "office_mgmt_subnet" {
   resource_group_name  = azurerm_resource_group.office_rg.name
   virtual_network_name = azurerm_virtual_network.office_network.name
   address_prefixes     = ["192.168.1.128/25"]
+  depends_on           = [azurerm_virtual_network.office_network]
 }
 
 # Subnet 3
@@ -35,6 +37,7 @@ resource "azurerm_subnet" "office_user_subnet" {
   resource_group_name  = azurerm_resource_group.office_rg.name
   virtual_network_name = azurerm_virtual_network.office_network.name
   address_prefixes     = ["192.168.10.0/24"]
+  depends_on           = [azurerm_virtual_network.office_network]
 }
 
 
@@ -58,6 +61,7 @@ resource "azurerm_network_interface" "office_nic_1" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.office_vm_public_ip.id
   }
+  depends_on = [azurerm_public_ip.office_vm_public_ip, azurerm_subnet.office_mgmt_subnet]
 }
 
 # Create Network Security Group and rule
@@ -82,45 +86,47 @@ resource "azurerm_network_security_group" "office_mgmt_nsg" {
   }
 }
 
-resource "azurerm_subnet_network_security_group_association" "office_mgmt_nsg-association" {
+resource "azurerm_subnet_network_security_group_association" "office_mgmt_nsg_association" {
   subnet_id                 = azurerm_subnet.office_mgmt_subnet.id
   network_security_group_id = azurerm_network_security_group.office_mgmt_nsg.id
+  depends_on                = [azurerm_subnet.office_mgmt_subnet, azurerm_network_security_group.office_mgmt_nsg]
 }
 
 resource "azurerm_virtual_machine" "office_vm_1" {
-    name                  = "office-vm"
-    resource_group_name             = azurerm_resource_group.office_rg.name
-    location                        = azurerm_resource_group.office_rg.location
-    network_interface_ids = [azurerm_network_interface.office_nic_1.id]
-    vm_size               = var.vmsize
+  name                          = "office-vm"
+  resource_group_name           = azurerm_resource_group.office_rg.name
+  location                      = azurerm_resource_group.office_rg.location
+  network_interface_ids         = [azurerm_network_interface.office_nic_1.id]
+  vm_size                       = var.vmsize
+  delete_os_disk_on_termination = true
 
-    storage_image_reference {
+  storage_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "16.04-LTS"
     version   = "latest"
-    }
+  }
 
-    storage_os_disk {
+  storage_os_disk {
     name              = "myosdisk1"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
-    }
+  }
 
-    os_profile {
+  os_profile {
     computer_name  = "office-vm-1"
     admin_username = "greg"
     admin_password = var.azure_password
-    }
+  }
 
-    os_profile_linux_config {
+  os_profile_linux_config {
     disable_password_authentication = false
-    }
+  }
 
-    tags = {
-    environment =  "office"
-    }
+  tags = {
+    environment = "office"
+  }
 }
 
 # Public IP
