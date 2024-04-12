@@ -47,6 +47,7 @@ resource "azurerm_public_ip" "office_vm_public_ip" {
   location            = azurerm_resource_group.office_rg.location
   allocation_method   = "Dynamic"
   tags                = { environment = "Office VM public ip" }
+  depends_on = [azurerm_virtual_network.office_network]
 }
 
 
@@ -127,6 +128,7 @@ resource "azurerm_virtual_machine" "office_vm_1" {
   tags = {
     environment = "office"
   }
+  depends_on = [azurerm_network_interface.office_nic_1]
 }
 
 # Public IP
@@ -137,6 +139,7 @@ resource "azurerm_public_ip" "office_public_ip" {
   location            = azurerm_resource_group.office_rg.location
   allocation_method   = "Dynamic"
   tags                = { environment = "Office public ip" }
+  depends_on          = [azurerm_resource_group.office_rg, ]
 }
 
 resource "azurerm_virtual_network_gateway" "office_vpn_gateway" {
@@ -157,6 +160,6 @@ resource "azurerm_virtual_network_gateway" "office_vpn_gateway" {
     private_ip_address_allocation = "Dynamic"
     subnet_id                     = azurerm_subnet.office_gateway_subnet.id
   }
-  depends_on = [azurerm_public_ip.office_public_ip]
+  depends_on = [azurerm_public_ip.office_public_ip, azurerm_subnet.office_gateway_subnet]
 
 }

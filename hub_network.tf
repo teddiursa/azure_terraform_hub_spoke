@@ -15,6 +15,7 @@ resource "azurerm_virtual_network" "hub_vnet" {
   tags = {
     environment = "hub-spoke"
   }
+  depends_on = [azurerm_resource_group.hub_net_rg]
 }
 
 resource "azurerm_subnet" "hub_gateway_subnet" {
@@ -22,6 +23,7 @@ resource "azurerm_subnet" "hub_gateway_subnet" {
   resource_group_name  = azurerm_resource_group.hub_net_rg.name
   virtual_network_name = azurerm_virtual_network.hub_vnet.name
   address_prefixes     = ["10.0.255.224/27"]
+  depends_on           = [azurerm_virtual_network.hub_vnet]
 }
 
 resource "azurerm_subnet" "hub_mgmt" {
@@ -29,6 +31,7 @@ resource "azurerm_subnet" "hub_mgmt" {
   resource_group_name  = azurerm_resource_group.hub_net_rg.name
   virtual_network_name = azurerm_virtual_network.hub_vnet.name
   address_prefixes     = ["10.0.0.64/27"]
+  depends_on           = [azurerm_virtual_network.hub_vnet]
 }
 
 resource "azurerm_subnet" "hub_dmz" {
@@ -36,6 +39,7 @@ resource "azurerm_subnet" "hub_dmz" {
   resource_group_name  = azurerm_resource_group.hub_net_rg.name
   virtual_network_name = azurerm_virtual_network.hub_vnet.name
   address_prefixes     = ["10.0.0.32/27"]
+  depends_on           = [azurerm_virtual_network.hub_vnet]
 }
 
 # Due to vCPU restrictions, I removed the hub vm
@@ -148,6 +152,8 @@ resource "azurerm_virtual_network_gateway_connection" "hub_office_conn" {
   peer_virtual_network_gateway_id = azurerm_virtual_network_gateway.office_vpn_gateway.id
 
   shared_key = var.shared_key
+
+  depends_on = [azurerm_virtual_network_gateway.hub_vnet_gateway, azurerm_virtual_network_gateway.office_vpn_gateway]
 }
 
 resource "azurerm_virtual_network_gateway_connection" "office_hub_conn" {
@@ -160,4 +166,6 @@ resource "azurerm_virtual_network_gateway_connection" "office_hub_conn" {
   peer_virtual_network_gateway_id = azurerm_virtual_network_gateway.hub_vnet_gateway.id
 
   shared_key = var.shared_key
+
+  depends_on = [azurerm_virtual_network_gateway.hub_vnet_gateway, azurerm_virtual_network_gateway.office_vpn_gateway]
 }
