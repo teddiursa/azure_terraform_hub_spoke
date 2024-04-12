@@ -49,7 +49,7 @@ variable "vmsize" {
 
 variable "resource_group_location" {
   type        = string
-  default     = "westus"
+  default     = "eastus"
   description = "Location of the resource group."
 }
 
