@@ -10,6 +10,7 @@ resource "azurerm_virtual_network" "office_network" {
   address_space       = ["192.168.0.0/16"]
   location            = azurerm_resource_group.office_rg.location
   resource_group_name = azurerm_resource_group.office_rg.name
+  depends_on          = [azurerm_resource_group.office_rg]
 }
 
 # Gateway Subnet
@@ -47,7 +48,7 @@ resource "azurerm_public_ip" "office_vm_public_ip" {
   location            = azurerm_resource_group.office_rg.location
   allocation_method   = "Dynamic"
   tags                = { environment = "Office VM public ip" }
-  depends_on = [azurerm_virtual_network.office_network]
+  depends_on          = [azurerm_virtual_network.office_network]
 }
 
 
@@ -85,6 +86,7 @@ resource "azurerm_network_security_group" "office_mgmt_nsg" {
   tags = {
     environment = "office"
   }
+  depends_on = [azurerm_resource_group.office_rg]
 }
 
 resource "azurerm_subnet_network_security_group_association" "office_mgmt_nsg_association" {
@@ -139,7 +141,7 @@ resource "azurerm_public_ip" "office_public_ip" {
   location            = azurerm_resource_group.office_rg.location
   allocation_method   = "Dynamic"
   tags                = { environment = "Office public ip" }
-  depends_on          = [azurerm_resource_group.office_rg, ]
+  depends_on          = [azurerm_resource_group.office_rg]
 }
 
 resource "azurerm_virtual_network_gateway" "office_vpn_gateway" {

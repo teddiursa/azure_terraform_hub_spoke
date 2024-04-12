@@ -28,11 +28,11 @@ resource "azurerm_network_interface" "hub_nva_nic" {
 }
 
 resource "azurerm_virtual_machine" "hub_nva_vm" {
-  name                             = "hub-nva-vm"
-  resource_group_name              = azurerm_resource_group.hub_apps_rg.name
-  location                         = azurerm_resource_group.hub_apps_rg.location
-  network_interface_ids            = [azurerm_network_interface.hub_nva_nic.id]
-  vm_size                          = var.vmsize
+  name                          = "hub-nva-vm"
+  resource_group_name           = azurerm_resource_group.hub_apps_rg.name
+  location                      = azurerm_resource_group.hub_apps_rg.location
+  network_interface_ids         = [azurerm_network_interface.hub_nva_nic.id]
+  vm_size                       = var.vmsize
   delete_os_disk_on_termination = true
 
   storage_image_reference {
@@ -111,6 +111,7 @@ resource "azurerm_route_table" "hub_gateway_rt" {
   tags = {
     environment = "hub-nva"
   }
+  depends_on = [azurerm_resource_group.hub_apps_rg]
 }
 
 resource "azurerm_subnet_route_table_association" "hub_gateway_rt_hub_vnet_gateway_subnet" {
@@ -141,6 +142,7 @@ resource "azurerm_route_table" "spoke1_rt" {
   tags = {
     environment = "hub-nva"
   }
+  depends_on = [azurerm_resource_group.hub_apps_rg]
 }
 
 resource "azurerm_subnet_route_table_association" "spoke1_rt_spoke1_vnet_mgmt" {
@@ -177,6 +179,7 @@ resource "azurerm_route_table" "spoke2_rt" {
   tags = {
     environment = "hub-nva"
   }
+  depends_on = [azurerm_resource_group.hub_apps_rg]
 }
 
 resource "azurerm_subnet_route_table_association" "spoke2_rt_spoke2_vnet_mgmt" {

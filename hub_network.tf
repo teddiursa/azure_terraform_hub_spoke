@@ -117,6 +117,7 @@ resource "azurerm_public_ip" "hub_public_ip" {
   location            = azurerm_resource_group.hub_net_rg.location
   allocation_method   = "Dynamic"
   tags                = { environment = "Office pip" }
+  depends_on          = [azurerm_resource_group.hub_net_rg]
 }
 
 resource "azurerm_virtual_network_gateway" "hub_vnet_gateway" {
