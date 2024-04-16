@@ -1,14 +1,14 @@
 # Resource Group
 resource "azurerm_resource_group" "spoke1_rg" {
-  location = var.resource_group_location
-  name     = "spoke1-rg"
+  location = var.resource_cloud_group_location
+  name     = "spoke1-rg-${random_pet.pet.id}"
 }
 
 resource "azurerm_virtual_network" "spoke1_vnet" {
-  name                = "spoke1-vnet"
+  name                = "spoke1-vnet-${random_pet.pet.id}"
   resource_group_name = azurerm_resource_group.spoke1_rg.name
   location            = azurerm_resource_group.spoke1_rg.location
-  address_space       = ["10.1.0.0/16"]
+  address_space       = [var.spoke1_vnet_prefix]
 
   tags = {
     environment = "spoke1"
@@ -17,23 +17,78 @@ resource "azurerm_virtual_network" "spoke1_vnet" {
 }
 
 resource "azurerm_subnet" "spoke1_mgmt" {
-  name                 = "mgmt"
+  name                 = "mgmt-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.spoke1_rg.name
   virtual_network_name = azurerm_virtual_network.spoke1_vnet.name
-  address_prefixes     = ["10.1.0.64/27"]
+  address_prefixes     = [var.spoke1_mgmt_subnet_prefix]
   depends_on           = [azurerm_virtual_network.spoke1_vnet]
 }
 
 resource "azurerm_subnet" "spoke1_workload" {
-  name                 = "workload"
+  name                 = "workload-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.spoke1_rg.name
   virtual_network_name = azurerm_virtual_network.spoke1_vnet.name
-  address_prefixes     = ["10.1.1.0/24"]
-  depends_on           = [azurerm_virtual_network.spoke1_vnet]
+  address_prefixes     = [var.spoke1_workload_subnet_prefix]
+
+
+  private_endpoint_network_policies_enabled = true
+  delegation {
+    name = "delegation"
+    service_delegation {
+      name    = "Microsoft.Web/serverFarms"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }
+
+  depends_on = [azurerm_virtual_network.spoke1_vnet]
 }
 
+# NSGs
+
+resource "azurerm_network_security_group" "spoke1_nsg" {
+  name                = "spoke1-nsg-${random_pet.pet.id}"
+  resource_group_name = azurerm_resource_group.spoke1_rg.name
+  location            = azurerm_resource_group.spoke1_rg.location
+}
+
+# resource "azurerm_network_security_rule" "http_rule" {
+#   name                        = "AllowHTTP"
+#   priority                    = 110
+#   direction                   = "Inbound"
+#   access                      = "Allow"
+#   protocol                    = "Tcp"
+#   source_port_range           = "*"
+#   destination_port_range      = "80"
+#   source_address_prefix       = var.office_mgmt_subnet_prefix
+#   destination_address_prefix  = "*"
+#   resource_group_name         = azurerm_resource_group.spoke1_rg.name
+#   network_security_group_name = azurerm_network_security_group.spoke1_nsg.name
+# }
+
+resource "azurerm_network_security_rule" "https_rule" {
+  name                        = "AllowHTTPS"
+  priority                    = 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "443"
+  source_address_prefix       = var.office_mgmt_subnet_prefix
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.spoke1_rg.name
+  network_security_group_name = azurerm_network_security_group.spoke1_nsg.name
+}
+
+resource "azurerm_subnet_network_security_group_association" "spoke1_nsg_assoc" {
+  subnet_id                 = azurerm_subnet.spoke1_workload.id
+  network_security_group_id = azurerm_network_security_group.spoke1_nsg.id
+}
+
+
+# Network Peering
+
 resource "azurerm_virtual_network_peering" "spoke1_hub_peer" {
-  name                      = "spoke1-hub-peer"
+  name                      = "spoke1-hub-peer-${random_pet.pet.id}"
   resource_group_name       = azurerm_resource_group.spoke1_rg.name
   virtual_network_name      = azurerm_virtual_network.spoke1_vnet.name
   remote_virtual_network_id = azurerm_virtual_network.hub_vnet.id
@@ -45,60 +100,60 @@ resource "azurerm_virtual_network_peering" "spoke1_hub_peer" {
   depends_on                   = [azurerm_virtual_network.spoke1_vnet, azurerm_virtual_network.hub_vnet, azurerm_virtual_network_gateway.hub_vnet_gateway]
 }
 
-resource "azurerm_network_interface" "spoke1_nic" {
-  name                 = "spoke1-vm-nic"
-  resource_group_name  = azurerm_resource_group.spoke1_rg.name
-  location             = azurerm_resource_group.spoke1_rg.location
-  enable_ip_forwarding = true
+# resource "azurerm_network_interface" "spoke1_nic" {
+#   name                 = "spoke1-vm-nic-${random_pet.pet.id}"
+#   resource_group_name  = azurerm_resource_group.spoke1_rg.name
+#   location             = azurerm_resource_group.spoke1_rg.location
+#   enable_ip_forwarding = true
 
-  ip_configuration {
-    name                          = "spoke1-vm"
-    subnet_id                     = azurerm_subnet.spoke1_mgmt.id
-    private_ip_address_allocation = "Dynamic"
-  }
-  depends_on = [azurerm_subnet.spoke1_mgmt]
-}
+#   ip_configuration {
+#     name                          = "spoke1-vm"
+#     subnet_id                     = azurerm_subnet.spoke1_mgmt.id
+#     private_ip_address_allocation = "Dynamic"
+#   }
+#   depends_on = [azurerm_subnet.spoke1_mgmt]
+# }
 
-resource "azurerm_virtual_machine" "spoke1_vm" {
-  name                          = "spoke1-vm"
-  resource_group_name           = azurerm_resource_group.spoke1_rg.name
-  location                      = azurerm_resource_group.spoke1_rg.location
-  network_interface_ids         = [azurerm_network_interface.spoke1_nic.id]
-  vm_size                       = var.vmsize
-  delete_os_disk_on_termination = true
+# resource "azurerm_virtual_machine" "spoke1_vm" {
+#   name                          = "spoke1-vm-${random_pet.pet.id}"
+#   resource_group_name           = azurerm_resource_group.spoke1_rg.name
+#   location                      = azurerm_resource_group.spoke1_rg.location
+#   network_interface_ids         = [azurerm_network_interface.spoke1_nic.id]
+#   vm_size                       = var.vmsize
+#   delete_os_disk_on_termination = true
 
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "16.04-LTS"
-    version   = "latest"
-  }
+#   storage_image_reference {
+#     publisher = "Canonical"
+#     offer     = "UbuntuServer"
+#     sku       = "16.04-LTS"
+#     version   = "latest"
+#   }
 
-  storage_os_disk {
-    name              = "myosdisk1"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
+#   storage_os_disk {
+#     name              = "myosdisk1"
+#     caching           = "ReadWrite"
+#     create_option     = "FromImage"
+#     managed_disk_type = "Standard_LRS"
+#   }
 
-  os_profile {
-    computer_name  = "spoke1-vm"
-    admin_username = "greg"
-    admin_password = var.azure_password
-  }
+#   os_profile {
+#     computer_name  = "spoke1-vm"
+#     admin_username = "greg"
+#     admin_password = var.azure_password
+#   }
 
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
+#   os_profile_linux_config {
+#     disable_password_authentication = false
+#   }
 
-  tags = {
-    environment = "spoke1"
-  }
-  depends_on = [azurerm_network_interface.spoke1_nic]
-}
+#   tags = {
+#     environment = "spoke1"
+#   }
+#   depends_on = [azurerm_network_interface.spoke1_nic]
+# }
 
 resource "azurerm_virtual_network_peering" "hub_spoke1_peer" {
-  name                         = "hub-spoke1-peer"
+  name                         = "hub-spoke1-peer-${random_pet.pet.id}"
   resource_group_name          = azurerm_resource_group.hub_net_rg.name
   virtual_network_name         = azurerm_virtual_network.hub_vnet.name
   remote_virtual_network_id    = azurerm_virtual_network.spoke1_vnet.id

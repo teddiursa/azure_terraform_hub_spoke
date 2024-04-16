@@ -1,14 +1,14 @@
 # Resource Group
 resource "azurerm_resource_group" "spoke2_rg" {
-  location = var.resource_group_location
-  name     = "spoke2-rg"
+  location = var.resource_cloud_group_location
+  name     = "spoke2-rg-${random_pet.pet.id}"
 }
 
 resource "azurerm_virtual_network" "spoke2_vnet" {
-  name                = "spoke2-vnet"
+  name                = "spoke2-vnet-${random_pet.pet.id}"
   resource_group_name = azurerm_resource_group.spoke2_rg.name
   location            = azurerm_resource_group.spoke2_rg.location
-  address_space       = ["10.2.0.0/16"]
+  address_space       = [var.spoke2_vnet_prefix]
 
   tags = {
     environment = "spoke2"
@@ -17,23 +17,23 @@ resource "azurerm_virtual_network" "spoke2_vnet" {
 }
 
 resource "azurerm_subnet" "spoke2_mgmt" {
-  name                 = "mgmt"
+  name                 = "mgmt-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.spoke2_rg.name
   virtual_network_name = azurerm_virtual_network.spoke2_vnet.name
-  address_prefixes     = ["10.2.0.64/27"]
+  address_prefixes     = [var.spoke2_mgmt_subnet_prefix]
   depends_on           = [azurerm_virtual_network.spoke2_vnet]
 }
 
 resource "azurerm_subnet" "spoke2_workload" {
-  name                 = "workload"
+  name                 = "workload-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.spoke2_rg.name
   virtual_network_name = azurerm_virtual_network.spoke2_vnet.name
-  address_prefixes     = ["10.2.1.0/24"]
+  address_prefixes     = [var.spoke2_workload_subnet_prefix]
   depends_on           = [azurerm_virtual_network.spoke2_vnet]
 }
 
 resource "azurerm_virtual_network_peering" "spoke2_hub_peer" {
-  name                      = "spoke2-hub-peer"
+  name                      = "spoke2-hub-peer-${random_pet.pet.id}"
   resource_group_name       = azurerm_resource_group.spoke2_rg.name
   virtual_network_name      = azurerm_virtual_network.spoke2_vnet.name
   remote_virtual_network_id = azurerm_virtual_network.hub_vnet.id
@@ -46,7 +46,7 @@ resource "azurerm_virtual_network_peering" "spoke2_hub_peer" {
 }
 
 resource "azurerm_network_interface" "spoke2_nic" {
-  name                 = "spoke2-vm-nic"
+  name                 = "spoke2-vm-nic-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.spoke2_rg.name
   location             = azurerm_resource_group.spoke2_rg.location
   enable_ip_forwarding = true
@@ -60,7 +60,7 @@ resource "azurerm_network_interface" "spoke2_nic" {
 }
 
 resource "azurerm_virtual_machine" "spoke2_vm" {
-  name                          = "spoke2-vm"
+  name                          = "spoke2-vm-${random_pet.pet.id}"
   resource_group_name           = azurerm_resource_group.spoke2_rg.name
   location                      = azurerm_resource_group.spoke2_rg.location
   network_interface_ids         = [azurerm_network_interface.spoke2_nic.id]
@@ -98,7 +98,7 @@ resource "azurerm_virtual_machine" "spoke2_vm" {
 }
 
 resource "azurerm_virtual_network_peering" "hub_spoke2_peer" {
-  name                         = "hub-spoke2-peer"
+  name                         = "hub-spoke2-peer-${random_pet.pet.id}"
   resource_group_name          = azurerm_resource_group.hub_net_rg.name
   virtual_network_name         = azurerm_virtual_network.hub_vnet.name
   remote_virtual_network_id    = azurerm_virtual_network.spoke2_vnet.id

@@ -1,13 +1,13 @@
 # Resource Group
 resource "azurerm_resource_group" "office_rg" {
-  location = var.resource_group_location
-  name     = "office-rg"
+  location = var.resource_office_group_location
+  name     = "office-rg-${random_pet.pet.id}"
 }
 
 # Virtual Network for office
 resource "azurerm_virtual_network" "office_network" {
-  name                = "main-office-vnet"
-  address_space       = ["192.168.0.0/16"]
+  name                = "main-office-vnet-${random_pet.pet.id}"
+  address_space       = [var.office_vnet_prefix]
   location            = azurerm_resource_group.office_rg.location
   resource_group_name = azurerm_resource_group.office_rg.name
   depends_on          = [azurerm_resource_group.office_rg]
@@ -25,31 +25,31 @@ resource "azurerm_subnet" "office_gateway_subnet" {
   name                 = "GatewaySubnet"
   resource_group_name  = azurerm_resource_group.office_rg.name
   virtual_network_name = azurerm_virtual_network.office_network.name
-  address_prefixes     = ["192.168.255.224/27"]
+  address_prefixes     = [var.office_gateway_subnet_prefix]
   depends_on           = [azurerm_virtual_network.office_network,azurerm_resource_group.office_rg]
 }
 
 # Subnet 2
 resource "azurerm_subnet" "office_mgmt_subnet" {
-  name                 = "office-mgmt-subnet"
+  name                 = "office-mgmt-subnet-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.office_rg.name
   virtual_network_name = azurerm_virtual_network.office_network.name
-  address_prefixes     = ["192.168.1.128/25"]
+  address_prefixes     = [var.office_mgmt_subnet_prefix]
   depends_on           = [azurerm_virtual_network.office_network,azurerm_resource_group.office_rg]
 }
 
 # Subnet 3
 resource "azurerm_subnet" "office_user_subnet" {
-  name                 = "office-user-subnet"
+  name                 = "office-user-subnet-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.office_rg.name
   virtual_network_name = azurerm_virtual_network.office_network.name
-  address_prefixes     = ["192.168.10.0/24"]
+  address_prefixes     = [var.office_user_subnet_prefix]
   depends_on           = [azurerm_virtual_network.office_network,azurerm_resource_group.office_rg]
 }
 
 
 resource "azurerm_public_ip" "office_vm_public_ip" {
-  name                = "office-vm-public-ip"
+  name                = "office-vm-public-ip-${random_pet.pet.id}"
   resource_group_name = azurerm_resource_group.office_rg.name
   location            = azurerm_resource_group.office_rg.location
   allocation_method   = "Dynamic"
@@ -59,7 +59,7 @@ resource "azurerm_public_ip" "office_vm_public_ip" {
 
 
 resource "azurerm_network_interface" "office_nic_1" {
-  name                = "office-nic-1"
+  name                = "office-nic-1-${random_pet.pet.id}"
   location            = azurerm_resource_group.office_rg.location
   resource_group_name = azurerm_resource_group.office_rg.name
 
@@ -74,7 +74,7 @@ resource "azurerm_network_interface" "office_nic_1" {
 
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "office_mgmt_nsg" {
-  name                = "office-mgmt-nsg"
+  name                = "office-mgmt-nsg-${random_pet.pet.id}"
   location            = azurerm_resource_group.office_rg.location
   resource_group_name = azurerm_resource_group.office_rg.name
   security_rule {
@@ -102,7 +102,7 @@ resource "azurerm_subnet_network_security_group_association" "office_mgmt_nsg_as
 }
 
 resource "azurerm_virtual_machine" "office_vm_1" {
-  name                          = "office-vm"
+  name                          = "office-vm-${random_pet.pet.id}"
   resource_group_name           = azurerm_resource_group.office_rg.name
   location                      = azurerm_resource_group.office_rg.location
   network_interface_ids         = [azurerm_network_interface.office_nic_1.id]
@@ -142,7 +142,7 @@ resource "azurerm_virtual_machine" "office_vm_1" {
 # Public IP
 
 resource "azurerm_public_ip" "office_public_ip" {
-  name                = "office-public-ip"
+  name                = "office-public-ip-${random_pet.pet.id}"
   resource_group_name = azurerm_resource_group.office_rg.name
   location            = azurerm_resource_group.office_rg.location
   allocation_method   = "Static"
@@ -156,7 +156,7 @@ resource "time_sleep" "office_vpn_delay" {
 }
 
 resource "azurerm_virtual_network_gateway" "office_vpn_gateway" {
-  name                = "office-vpn-gateway1"
+  name                = "office-vpn-gateway1-${random_pet.pet.id}"
   resource_group_name = azurerm_resource_group.office_rg.name
   location            = azurerm_resource_group.office_rg.location
 

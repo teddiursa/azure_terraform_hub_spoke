@@ -1,20 +1,20 @@
 # Resource Group
 resource "azurerm_resource_group" "hub_apps_rg" {
-  location = var.resource_group_location
-  name     = "hub-apps-rg"
+  location = var.resource_cloud_group_location
+  name     = "hub-apps-rg-${random_pet.pet.id}"
 }
 
 resource "azurerm_network_interface" "hub_nva_nic" {
-  name                 = "hub-nva-nic"
+  name                 = "hub-nva-nic-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.hub_apps_rg.name
   location             = azurerm_resource_group.hub_apps_rg.location
   enable_ip_forwarding = true
 
   ip_configuration {
-    name                          = "hub-nva"
+    name                          = "hub-nva-${random_pet.pet.id}"
     subnet_id                     = azurerm_subnet.hub_dmz.id
     private_ip_address_allocation = "Static"
-    private_ip_address            = "10.0.0.36"
+    private_ip_address            = var.hub_nva_ip
   }
 
   depends_on = [
@@ -28,7 +28,7 @@ resource "azurerm_network_interface" "hub_nva_nic" {
 }
 
 resource "azurerm_virtual_machine" "hub_nva_vm" {
-  name                          = "hub-nva-vm"
+  name                          = "hub-nva-vm-${random_pet.pet.id}"
   resource_group_name           = azurerm_resource_group.hub_apps_rg.name
   location                      = azurerm_resource_group.hub_apps_rg.location
   network_interface_ids         = [azurerm_network_interface.hub_nva_nic.id]
@@ -83,29 +83,29 @@ resource "azurerm_virtual_machine_extension" "enable_routes" {
 }
 
 resource "azurerm_route_table" "hub_gateway_rt" {
-  name                          = "hub-gateway-rt"
+  name                          = "hub-gateway-rt-${random_pet.pet.id}"
   resource_group_name           = azurerm_resource_group.hub_apps_rg.name
   location                      = azurerm_resource_group.hub_apps_rg.location
   disable_bgp_route_propagation = false
 
   route {
     name           = "toHub"
-    address_prefix = "10.0.0.0/16"
+    address_prefix = var.hub_vnet_prefix
     next_hop_type  = "VnetLocal"
   }
 
   route {
     name                   = "toSpoke1"
-    address_prefix         = "10.1.0.0/16"
+    address_prefix         = var.spoke1_vnet_prefix
     next_hop_type          = "VirtualAppliance"
-    next_hop_in_ip_address = "10.0.0.36"
+    next_hop_in_ip_address = var.hub_nva_ip
   }
 
   route {
     name                   = "toSpoke2"
-    address_prefix         = "10.2.0.0/16"
+    address_prefix         = var.spoke2_vnet_prefix
     next_hop_type          = "VirtualAppliance"
-    next_hop_in_ip_address = "10.0.0.36"
+    next_hop_in_ip_address = var.hub_nva_ip
   }
 
   tags = {
@@ -126,16 +126,16 @@ resource "azurerm_subnet_route_table_association" "hub_gateway_rt_hub_vnet_gatew
 }
 
 resource "azurerm_route_table" "spoke1_rt" {
-  name                          = "spoke1-rt"
+  name                          = "spoke1-rt-${random_pet.pet.id}"
   resource_group_name           = azurerm_resource_group.hub_apps_rg.name
   location                      = azurerm_resource_group.hub_apps_rg.location
   disable_bgp_route_propagation = false
 
   route {
     name                   = "toSpoke2"
-    address_prefix         = "10.2.0.0/16"
+    address_prefix         = var.spoke2_vnet_prefix
     next_hop_type          = "VirtualAppliance"
-    next_hop_in_ip_address = "10.0.0.36"
+    next_hop_in_ip_address = var.hub_nva_ip
   }
 
   route {
@@ -163,15 +163,15 @@ resource "azurerm_subnet_route_table_association" "spoke1_rt_spoke1_vnet_workloa
 }
 
 resource "azurerm_route_table" "spoke2_rt" {
-  name                          = "spoke2-rt"
+  name                          = "spoke2-rt-${random_pet.pet.id}"
   location                      = azurerm_resource_group.hub_apps_rg.location
   resource_group_name           = azurerm_resource_group.hub_apps_rg.name
   disable_bgp_route_propagation = false
 
   route {
     name                   = "toSpoke1"
-    address_prefix         = "10.1.0.0/16"
-    next_hop_in_ip_address = "10.0.0.36"
+    address_prefix         = var.spoke1_vnet_prefix
+    next_hop_in_ip_address = var.hub_nva_ip
     next_hop_type          = "VirtualAppliance"
   }
 

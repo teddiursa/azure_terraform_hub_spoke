@@ -1,16 +1,16 @@
 # Resource Group
 resource "azurerm_resource_group" "hub_net_rg" {
-  location = var.resource_group_location
-  name     = "hub-net-rg"
+  location = var.resource_cloud_group_location
+  name     = "hub-net-rg-${random_pet.pet.id}"
 }
 
 # Hub network
 
 resource "azurerm_virtual_network" "hub_vnet" {
-  name                = "hub-vnet"
+  name                = "hub-vnet-${random_pet.pet.id}"
   resource_group_name = azurerm_resource_group.hub_net_rg.name
   location            = azurerm_resource_group.hub_net_rg.location
-  address_space       = ["10.0.0.0/16"]
+  address_space       = [var.hub_vnet_prefix]
 
   tags = {
     environment = "hub-spoke"
@@ -22,27 +22,28 @@ resource "time_sleep" "hub_delay" {
   create_duration = "5s"
 }
 
+# Name needs to be exactly "GatewaySubnet" for vpn gateway config
 resource "azurerm_subnet" "hub_gateway_subnet" {
   name                 = "GatewaySubnet"
   resource_group_name  = azurerm_resource_group.hub_net_rg.name
   virtual_network_name = azurerm_virtual_network.hub_vnet.name
-  address_prefixes     = ["10.0.255.224/27"]
+  address_prefixes     = [var.hub_gateway_subnet_prefix]
   depends_on           = [azurerm_virtual_network.hub_vnet]
 }
 
 resource "azurerm_subnet" "hub_mgmt" {
-  name                 = "mgmt"
+  name                 = "mgmt-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.hub_net_rg.name
   virtual_network_name = azurerm_virtual_network.hub_vnet.name
-  address_prefixes     = ["10.0.0.64/27"]
+  address_prefixes     = [var.hub_mgmt_subnet_prefix]
   depends_on           = [azurerm_virtual_network.hub_vnet]
 }
 
 resource "azurerm_subnet" "hub_dmz" {
-  name                 = "dmz"
+  name                 = "dmz-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.hub_net_rg.name
   virtual_network_name = azurerm_virtual_network.hub_vnet.name
-  address_prefixes     = ["10.0.0.32/27"]
+  address_prefixes     = [var.hub_dmz_subnet_prefix]
   depends_on           = [azurerm_virtual_network.hub_vnet]
 }
 
@@ -116,7 +117,7 @@ resource "azurerm_subnet" "hub_dmz" {
 # Hub Public IP
 
 resource "azurerm_public_ip" "hub_public_ip" {
-  name                = "hub-public-ip"
+  name                = "hub-public-ip-${random_pet.pet.id}"
   resource_group_name = azurerm_resource_group.hub_net_rg.name
   location            = azurerm_resource_group.hub_net_rg.location
   allocation_method   = "Static"
@@ -131,7 +132,7 @@ resource "time_sleep" "hub_vpn_delay" {
 
 
 resource "azurerm_virtual_network_gateway" "hub_vnet_gateway" {
-  name                = "hub-vpn-gateway1"
+  name                = "hub-vpn-gateway1-${random_pet.pet.id}"
   resource_group_name = azurerm_resource_group.hub_net_rg.name
   location            = azurerm_resource_group.hub_net_rg.location
 
@@ -153,7 +154,7 @@ resource "azurerm_virtual_network_gateway" "hub_vnet_gateway" {
 }
 
 resource "azurerm_virtual_network_gateway_connection" "hub_office_conn" {
-  name                = "hub-office-conn"
+  name                = "hub-office-conn-${random_pet.pet.id}"
   location            = azurerm_resource_group.hub_net_rg.location
   resource_group_name = azurerm_resource_group.hub_net_rg.name
 
@@ -169,7 +170,7 @@ resource "azurerm_virtual_network_gateway_connection" "hub_office_conn" {
 }
 
 resource "azurerm_virtual_network_gateway_connection" "office_hub_conn" {
-  name                            = "office-hub-conn"
+  name                            = "office-hub-conn-${random_pet.pet.id}"
   location                        = azurerm_resource_group.hub_net_rg.location
   resource_group_name             = azurerm_resource_group.hub_net_rg.name
   type                            = "Vnet2Vnet"
