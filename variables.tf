@@ -49,13 +49,13 @@ variable "vmsize" {
 
 variable "resource_office_group_location" {
   type        = string
-  default     = "westus"
+  default     = "eastus"
   description = "Location of the resource group."
 }
 
 variable "resource_cloud_group_location" {
   type        = string
-  default     = "westus"
+  default     = "eastus"
   description = "Location of the resource group."
 }
 
@@ -163,4 +163,10 @@ variable "spoke2_workload_subnet_prefix" {
   description = "Address prefix for the spoke2 workload subnet"
   type        = string
   default     = "10.2.1.0/24"
+}
+
+variable "dns_suffix" {
+  description = "Suffix for my domain"
+  type        = string
+  default     = "azurewebsites.net"
 }

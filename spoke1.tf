@@ -31,14 +31,14 @@ resource "azurerm_subnet" "spoke1_workload" {
   address_prefixes     = [var.spoke1_workload_subnet_prefix]
 
 
-  private_endpoint_network_policies_enabled = true
-  delegation {
-    name = "delegation"
-    service_delegation {
-      name    = "Microsoft.Web/serverFarms"
-      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
-    }
-  }
+  # private_endpoint_network_policies_enabled = true
+  # delegation {
+  #   name = "delegation"
+  #   service_delegation {
+  #     name    = "Microsoft.Web/serverFarms"
+  #     actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+  #   }
+  # }
 
   depends_on = [azurerm_virtual_network.spoke1_vnet]
 }

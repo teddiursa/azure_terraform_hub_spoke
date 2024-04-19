@@ -53,17 +53,26 @@ resource "azurerm_private_dns_zone" "dns_zone" {
   resource_group_name = azurerm_resource_group.webapp_rg.name
 }
 
-# Link the Private DNS Zone to the Virtual Network
+# Link the Private DNS Zone to the spoke 1 vNet
 resource "azurerm_private_dns_zone_virtual_network_link" "webapp_link" {
   name                  = "webapp-link-${random_pet.pet.id}"
   resource_group_name   = azurerm_resource_group.webapp_rg.name
   private_dns_zone_name = azurerm_private_dns_zone.dns_zone.name
-  virtual_network_id    = azurerm_virtual_network.spoke1_vnet.id
+  virtual_network_id    = azurerm_virtual_network.office_network.id
 }
 
-# Create a DNS 'A' Record
-resource "azurerm_private_dns_a_record" "webapp_A_record" {
-  name                = "webapp-A-${random_pet.pet.id}"
+# Create a DNS 'A' Record for webapp
+resource "azurerm_private_dns_a_record" "webapp_a_record" {
+  name                = "webapp-${random_pet.pet.id}"
+  zone_name           = azurerm_private_dns_zone.dns_zone.name
+  resource_group_name = azurerm_resource_group.webapp_rg.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.webapp_private_endpoint.private_service_connection.0.private_ip_address]
+}
+
+# Create a DNS 'A' Record for webapp
+resource "azurerm_private_dns_a_record" "webapp_scm_record" {
+  name                = "webapp-${random_pet.pet.id}.scm"  
   zone_name           = azurerm_private_dns_zone.dns_zone.name
   resource_group_name = azurerm_resource_group.webapp_rg.name
   ttl                 = 300
