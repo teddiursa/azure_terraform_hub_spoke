@@ -63,7 +63,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "webapp_link" {
 
 # Create a DNS 'A' Record
 resource "azurerm_private_dns_a_record" "webapp_A_record" {
-  name                = "webapp-a-${random_pet.pet.id}"
+  name                = "webapp-A-${random_pet.pet.id}"
   zone_name           = azurerm_private_dns_zone.dns_zone.name
   resource_group_name = azurerm_resource_group.webapp_rg.name
   ttl                 = 300
