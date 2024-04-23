@@ -29,6 +29,11 @@ variable "azure_password" {
   sensitive   = true
 }
 
+variable "azure_user" {
+  description = "Username for Azure resources"
+  type        = string
+  sensitive   = true
+}
 
 variable "home_public_ip" {
   description = "Public IP of my home"

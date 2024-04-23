@@ -95,7 +95,7 @@ resource "azurerm_subnet" "hub_dmz" {
 
 #   os_profile {
 #     computer_name  = "hub-vm"
-#     admin_username = "greg"
+#     admin_username = var.azure_user
 #     admin_password = var.azure_password
 #   }
 

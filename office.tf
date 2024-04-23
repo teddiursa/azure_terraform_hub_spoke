@@ -127,7 +127,7 @@ resource "azurerm_virtual_machine" "office_vm_1" {
 
   os_profile {
     computer_name  = "office-vm-1"
-    admin_username = "greg"
+    admin_username = var.azure_user
     admin_password = var.azure_password
   }
 

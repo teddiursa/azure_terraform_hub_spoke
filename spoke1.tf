@@ -42,7 +42,7 @@ resource "azurerm_network_security_group" "spoke1_nsg" {
   location            = azurerm_resource_group.spoke1_rg.location
 }
 
-# Allow HTTPS straffic to workload subnet from mgmt subnet
+# Allow HTTPS traffic to workload subnet from mgmt subnet
 
 resource "azurerm_network_security_rule" "https_rule" {
   name                        = "AllowHTTPS"
@@ -117,7 +117,7 @@ resource "azurerm_virtual_network_peering" "spoke1_hub_peer" {
 
 #   os_profile {
 #     computer_name  = "spoke1-vm"
-#     admin_username = "greg"
+#     admin_username = var.azure_user
 #     admin_password = var.azure_password
 #   }
 

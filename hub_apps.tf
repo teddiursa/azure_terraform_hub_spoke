@@ -51,7 +51,7 @@ resource "azurerm_virtual_machine" "hub_nva_vm" {
 
   os_profile {
     computer_name  = "hub-nva-vm"
-    admin_username = "greg"
+    admin_username = var.azure_user
     admin_password = var.azure_password
   }
 
