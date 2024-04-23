@@ -164,9 +164,3 @@ variable "spoke2_workload_subnet_prefix" {
   type        = string
   default     = "10.2.1.0/24"
 }
-
-variable "dns_suffix" {
-  description = "Suffix for my domain"
-  type        = string
-  default     = "azurewebsites.net"
-}

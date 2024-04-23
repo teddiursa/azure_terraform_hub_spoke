@@ -47,7 +47,7 @@ resource "azurerm_subnet" "office_user_subnet" {
   depends_on           = [azurerm_virtual_network.office_network,azurerm_resource_group.office_rg]
 }
 
-
+# Public IP and office nic is for the "on-prem" vm I remote into
 resource "azurerm_public_ip" "office_vm_public_ip" {
   name                = "office-vm-public-ip-${random_pet.pet.id}"
   resource_group_name = azurerm_resource_group.office_rg.name
@@ -77,6 +77,8 @@ resource "azurerm_network_security_group" "office_mgmt_nsg" {
   name                = "office-mgmt-nsg-${random_pet.pet.id}"
   location            = azurerm_resource_group.office_rg.location
   resource_group_name = azurerm_resource_group.office_rg.name
+
+  # Allow SSH into vm from only my home public IP
   security_rule {
     name                       = "SSH"
     priority                   = 1001
@@ -155,6 +157,7 @@ resource "time_sleep" "office_vpn_delay" {
   create_duration = "5s"
 }
 
+# VPN gateway to connect to "hub" network
 resource "azurerm_virtual_network_gateway" "office_vpn_gateway" {
   name                = "office-vpn-gateway1-${random_pet.pet.id}"
   resource_group_name = azurerm_resource_group.office_rg.name

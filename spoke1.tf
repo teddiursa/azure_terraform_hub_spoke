@@ -31,15 +31,6 @@ resource "azurerm_subnet" "spoke1_workload" {
   address_prefixes     = [var.spoke1_workload_subnet_prefix]
 
 
-  # private_endpoint_network_policies_enabled = true
-  # delegation {
-  #   name = "delegation"
-  #   service_delegation {
-  #     name    = "Microsoft.Web/serverFarms"
-  #     actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
-  #   }
-  # }
-
   depends_on = [azurerm_virtual_network.spoke1_vnet]
 }
 
@@ -51,19 +42,7 @@ resource "azurerm_network_security_group" "spoke1_nsg" {
   location            = azurerm_resource_group.spoke1_rg.location
 }
 
-# resource "azurerm_network_security_rule" "http_rule" {
-#   name                        = "AllowHTTP"
-#   priority                    = 110
-#   direction                   = "Inbound"
-#   access                      = "Allow"
-#   protocol                    = "Tcp"
-#   source_port_range           = "*"
-#   destination_port_range      = "80"
-#   source_address_prefix       = var.office_mgmt_subnet_prefix
-#   destination_address_prefix  = "*"
-#   resource_group_name         = azurerm_resource_group.spoke1_rg.name
-#   network_security_group_name = azurerm_network_security_group.spoke1_nsg.name
-# }
+# Allow HTTPS straffic to workload subnet from mgmt subnet
 
 resource "azurerm_network_security_rule" "https_rule" {
   name                        = "AllowHTTPS"

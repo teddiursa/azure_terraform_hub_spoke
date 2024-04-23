@@ -11,7 +11,7 @@ terraform {
   }
 }
 
-
+# Use variables set in secret.tfvars to connect to azure
 provider "azurerm" {
   features {}
 
