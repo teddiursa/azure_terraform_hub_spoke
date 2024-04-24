@@ -56,6 +56,20 @@ resource "azurerm_network_security_rule" "sql_rule" {
   network_security_group_name = azurerm_network_security_group.spoke2_nsg.name
 }
 
+resource "azurerm_network_security_rule" "block_sql_rule" {
+  name                        = "DenySQL"
+  priority                    = 110
+  direction                   = "Inbound"
+  access                      = "Deny"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "1433"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.spoke2_rg.name
+  network_security_group_name = azurerm_network_security_group.spoke2_nsg.name
+}
+
 resource "azurerm_subnet_network_security_group_association" "spoke2_nsg_assoc" {
   subnet_id                 = azurerm_subnet.spoke2_workload.id
   network_security_group_id = azurerm_network_security_group.spoke2_nsg.id
