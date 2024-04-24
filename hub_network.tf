@@ -18,9 +18,7 @@ resource "azurerm_virtual_network" "hub_vnet" {
   depends_on = [azurerm_resource_group.hub_net_rg]
 }
 
-resource "time_sleep" "hub_delay" {
-  create_duration = "5s"
-}
+
 
 # Name needs to be exactly "GatewaySubnet" for vpn gateway config
 resource "azurerm_subnet" "hub_gateway_subnet" {
@@ -125,11 +123,6 @@ resource "azurerm_public_ip" "hub_public_ip" {
   tags                = { environment = "Office pip" }
   depends_on          = [azurerm_resource_group.hub_net_rg]
 }
-
-resource "time_sleep" "hub_vpn_delay" {
-  create_duration = "3s"
-}
-
 
 resource "azurerm_virtual_network_gateway" "hub_vnet_gateway" {
   name                = "hub-vpn-gateway1-${random_pet.pet.id}"

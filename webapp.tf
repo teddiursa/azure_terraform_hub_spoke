@@ -11,7 +11,6 @@ resource "azurerm_service_plan" "appserviceplan" {
   sku_name            = "B1"
 }
 
-
 resource "azurerm_linux_web_app" "webapp1" {
   name                          = "webapp1-${random_pet.pet.id}"
   location                      = azurerm_resource_group.webapp_rg.location
@@ -27,6 +26,7 @@ resource "azurerm_linux_web_app" "webapp1" {
   }
 }
 
+
 resource "azurerm_linux_web_app" "webapp2" {
   name                          = "webapp2-${random_pet.pet.id}"
   location                      = azurerm_resource_group.webapp_rg.location
@@ -41,6 +41,54 @@ resource "azurerm_linux_web_app" "webapp2" {
     # minimum_tls_version = "1.2"
   }
 }
+
+# Create a private endpoint for webapp1 in spoke1_workload subnet
+resource "azurerm_private_endpoint" "webapp1_private_endpoint" {
+  name                = "webapp1-endpoint-${random_pet.pet.id}"
+  location            = azurerm_resource_group.webapp_rg.location
+  resource_group_name = azurerm_resource_group.webapp_rg.name
+  subnet_id           = azurerm_subnet.spoke1_workload.id
+
+  private_service_connection {
+    name                           = "webapp1-privateserviceconnection-${random_pet.pet.id}"
+    is_manual_connection           = false
+    private_connection_resource_id = azurerm_linux_web_app.webapp1.id
+    subresource_names              = ["sites"]
+  }
+}
+
+# Create a private endpoint for webapp2 in spoke1_workload subnet
+resource "azurerm_private_endpoint" "webapp2_private_endpoint" {
+  name                = "webapp2-endpoint-${random_pet.pet.id}"
+  location            = azurerm_resource_group.webapp_rg.location
+  resource_group_name = azurerm_resource_group.webapp_rg.name
+  subnet_id           = azurerm_subnet.spoke1_workload.id
+
+  private_service_connection {
+    name                           = "webapp2-privateserviceconnection-${random_pet.pet.id}"
+    is_manual_connection           = false
+    private_connection_resource_id = azurerm_linux_web_app.webapp2.id
+    subresource_names              = ["sites"]
+  }
+}
+
+# resource "time_sleep" "txt_record_delay" {
+#   create_duration = "60s"
+# }
+
+# resource "azurerm_app_service_custom_hostname_binding" "webapp1_binding" {
+#   hostname            = "${azurerm_linux_web_app.webapp1.name}.${var.domain_name}"
+#   app_service_name    = azurerm_linux_web_app.webapp1.name
+#   resource_group_name = azurerm_resource_group.webapp_rg.name
+#   depends_on          = [time_sleep.txt_record_delay, azurerm_dns_txt_record.webapp1_txt_record]
+# }
+
+# resource "azurerm_app_service_custom_hostname_binding" "webapp2_binding" {
+#   hostname            = "${azurerm_linux_web_app.webapp2.name}.${var.domain_name}"
+#   app_service_name    = azurerm_linux_web_app.webapp2.name
+#   resource_group_name = azurerm_resource_group.webapp_rg.name
+#   depends_on          = [time_sleep.txt_record_delay, azurerm_dns_txt_record.webapp2_txt_record]
+# }
 
 # Application gateway
 # Not using due to regional public ip limit
@@ -117,35 +165,3 @@ resource "azurerm_linux_web_app" "webapp2" {
 #     priority                   = 1
 #   }
 # }
-
-
-# Create a private endpoint for webapp1 in spoke1_workload subnet
-resource "azurerm_private_endpoint" "webapp1_private_endpoint" {
-  name                = "webapp1-endpoint-${random_pet.pet.id}"
-  location            = azurerm_resource_group.webapp_rg.location
-  resource_group_name = azurerm_resource_group.webapp_rg.name
-  subnet_id           = azurerm_subnet.spoke1_workload.id
-
-  private_service_connection {
-    name                           = "webapp1-privateserviceconnection-${random_pet.pet.id}"
-    is_manual_connection           = false
-    private_connection_resource_id = azurerm_linux_web_app.webapp1.id
-    subresource_names              = ["sites"]
-  }
-}
-
-# Create a private endpoint for webapp2 in spoke1_workload subnet
-resource "azurerm_private_endpoint" "webapp2_private_endpoint" {
-  name                = "webapp2-endpoint-${random_pet.pet.id}"
-  location            = azurerm_resource_group.webapp_rg.location
-  resource_group_name = azurerm_resource_group.webapp_rg.name
-  subnet_id           = azurerm_subnet.spoke1_workload.id
-
-  private_service_connection {
-    name                           = "webapp2-privateserviceconnection-${random_pet.pet.id}"
-    is_manual_connection           = false
-    private_connection_resource_id = azurerm_linux_web_app.webapp2.id
-    subresource_names              = ["sites"]
-  }
-}
-

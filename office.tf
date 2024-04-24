@@ -1,10 +1,8 @@
-# Resource Group
 resource "azurerm_resource_group" "office_rg" {
   location = var.resource_office_group_location
   name     = "office-rg-${random_pet.pet.id}"
 }
 
-# Virtual Network for office
 resource "azurerm_virtual_network" "office_network" {
   name                = "main-office-vnet-${random_pet.pet.id}"
   address_space       = [var.office_vnet_prefix]
@@ -14,9 +12,6 @@ resource "azurerm_virtual_network" "office_network" {
 }
 
 
-resource "time_sleep" "office_delay" {
-  create_duration = "5s"
-}
 
 
 # Gateway Subnet
@@ -153,9 +148,6 @@ resource "azurerm_public_ip" "office_public_ip" {
   depends_on          = [azurerm_resource_group.office_rg]
 }
 
-resource "time_sleep" "office_vpn_delay" {
-  create_duration = "5s"
-}
 
 # VPN gateway to connect to "hub" network
 resource "azurerm_virtual_network_gateway" "office_vpn_gateway" {
