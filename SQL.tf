@@ -11,6 +11,7 @@ resource "azurerm_mssql_server" "sqlserver" {
   version                      = "12.0"
   administrator_login          = var.azure_user
   administrator_login_password = var.azure_password
+  public_network_access_enabled = false
 }
 
 # Create an Azure SQL Database
