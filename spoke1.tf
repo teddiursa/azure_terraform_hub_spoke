@@ -61,7 +61,7 @@ resource "azurerm_network_security_rule" "web_rule" {
 
 # Block HTTP and HTTPS from all other networks
 
-resource "azurerm_network_security_rule" "http_rule" {
+resource "azurerm_network_security_rule" "block_http_rule" {
   name                        = "BlockWeb"
   priority                    = 110
   direction                   = "Inbound"
@@ -69,6 +69,35 @@ resource "azurerm_network_security_rule" "http_rule" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_ranges     = ["80", "443"]
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.spoke1_rg.name
+  network_security_group_name = azurerm_network_security_group.spoke1_nsg.name
+}
+
+
+resource "azurerm_network_security_rule" "spoke1_ssh_rule" {
+  name                        = "AllowSSH"
+  priority                    = 120
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
+  source_address_prefixes     = [var.office_mgmt_subnet_prefix, var.bastion_subnet_prefix]
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.spoke1_rg.name
+  network_security_group_name = azurerm_network_security_group.spoke1_nsg.name
+}
+
+resource "azurerm_network_security_rule" "spoke1_block_ssh_rule" {
+  name                        = "DenySSH"
+  priority                    = 130
+  direction                   = "Inbound"
+  access                      = "Deny"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.spoke1_rg.name

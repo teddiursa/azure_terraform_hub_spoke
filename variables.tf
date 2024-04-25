@@ -35,12 +35,6 @@ variable "azure_user" {
   sensitive   = true
 }
 
-variable "home_public_ip" {
-  description = "Public IP of my home"
-  type        = string
-  sensitive   = true
-}
-
 variable "shared_key" {
   description = "Public IP of my home"
   type        = string
@@ -100,6 +94,12 @@ variable "office_user_subnet_prefix" {
   description = "Address prefix for the office user subnet"
   type        = string
   default     = "192.168.10.0/24"
+}
+
+variable "bastion_subnet_prefix" {
+  description = "Address prefix for the bastion subnet"
+  type        = string
+  default     = "192.168.2.0/27"
 }
 
 # Hub network address space

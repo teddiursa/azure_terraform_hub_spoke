@@ -11,9 +11,6 @@ resource "azurerm_virtual_network" "office_network" {
   depends_on          = [azurerm_resource_group.office_rg]
 }
 
-
-
-
 # Gateway Subnet
 # Name needs to be exactly "GatewaySubnet" for vpn gateway config
 resource "azurerm_subnet" "office_gateway_subnet" {
@@ -24,7 +21,7 @@ resource "azurerm_subnet" "office_gateway_subnet" {
   depends_on           = [azurerm_virtual_network.office_network,azurerm_resource_group.office_rg]
 }
 
-# Subnet 2
+# Subnet for management machines
 resource "azurerm_subnet" "office_mgmt_subnet" {
   name                 = "office-mgmt-subnet-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.office_rg.name
@@ -33,7 +30,7 @@ resource "azurerm_subnet" "office_mgmt_subnet" {
   depends_on           = [azurerm_virtual_network.office_network,azurerm_resource_group.office_rg]
 }
 
-# Subnet 3
+# Subnet for normal users
 resource "azurerm_subnet" "office_user_subnet" {
   name                 = "office-user-subnet-${random_pet.pet.id}"
   resource_group_name  = azurerm_resource_group.office_rg.name
@@ -42,16 +39,33 @@ resource "azurerm_subnet" "office_user_subnet" {
   depends_on           = [azurerm_virtual_network.office_network,azurerm_resource_group.office_rg]
 }
 
-# Public IP and office nic is for the "on-prem" vm I remote into
-resource "azurerm_public_ip" "office_vm_public_ip" {
-  name                = "office-vm-public-ip-${random_pet.pet.id}"
-  resource_group_name = azurerm_resource_group.office_rg.name
-  location            = azurerm_resource_group.office_rg.location
-  allocation_method   = "Dynamic"
-  tags                = { environment = "Office VM public ip" }
-  depends_on          = [azurerm_virtual_network.office_network]
+# Bastion subnet
+resource "azurerm_subnet" "bastion_subnet" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = azurerm_resource_group.office_rg.name
+  virtual_network_name = azurerm_virtual_network.office_network.name
+  address_prefixes     = [var.bastion_subnet_prefix]
 }
 
+resource "azurerm_public_ip" "bastion_pip" {
+  name                = "bastion-pip-${random_pet.pet.id}"
+  location            = azurerm_resource_group.office_rg.location
+  resource_group_name = azurerm_resource_group.office_rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
+resource "azurerm_bastion_host" "bastion_host" {
+  name                = "bastion-host-${random_pet.pet.id}"
+  location            = azurerm_resource_group.office_rg.location
+  resource_group_name = azurerm_resource_group.office_rg.name
+
+  ip_configuration {
+    name                 = "configuration"
+    subnet_id            = azurerm_subnet.bastion_subnet.id
+    public_ip_address_id = azurerm_public_ip.bastion_pip.id
+  }
+}
 
 resource "azurerm_network_interface" "office_nic_1" {
   name                = "office-nic-1-${random_pet.pet.id}"
@@ -62,9 +76,7 @@ resource "azurerm_network_interface" "office_nic_1" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.office_mgmt_subnet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.office_vm_public_ip.id
   }
-  depends_on = [azurerm_public_ip.office_vm_public_ip, azurerm_subnet.office_mgmt_subnet]
 }
 
 # Create Network Security Group and rule
@@ -72,20 +84,6 @@ resource "azurerm_network_security_group" "office_mgmt_nsg" {
   name                = "office-mgmt-nsg-${random_pet.pet.id}"
   location            = azurerm_resource_group.office_rg.location
   resource_group_name = azurerm_resource_group.office_rg.name
-
-  # Allow SSH into vm from only my home public IP
-  security_rule {
-    name                       = "SSH"
-    priority                   = 1001
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = var.home_public_ip
-    destination_address_prefix = "*"
-  }
-
   tags = {
     environment = "office"
   }

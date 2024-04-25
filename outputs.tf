@@ -1,7 +1,7 @@
-output "public_ip_address" {
-  description = "Public IP address of the office network interface"
-  value       = azurerm_public_ip.office_vm_public_ip.ip_address
-}
+# output "public_ip_address" {
+#   description = "Public IP address of the office network interface"
+#   value       = azurerm_public_ip.office_vm_public_ip.ip_address
+# }
 
 output "webapp1_hostname" {
   description = "Hostname of webapp1"
