@@ -13,7 +13,7 @@ Write-Host "Run the following on the Azure VMs:"
 Write-Host "-------------------------------------------"
 
 # Bash Command
-Write-Host "echo '-------------------------------------------' &&`
+Write-Host "printf '\n\n' &&`
 (grep -q '$FOUND_STRING' <(nc -zv $SQL_HOSTNAME 1433 2>&1) && echo $SQL_HOSTNAME ': nc - Success!' || echo $SQL_HOSTNAME ': nc - Failed!') &&`
 (grep -q '$FOUND_STRING' <(nc -zv $SQL_PRIVATE_ENDPOINT 1433 2>&1) && echo $SQL_PRIVATE_ENDPOINT ': nc - Success!' || echo $SQL_PRIVATE_ENDPOINT ': nc - Failed!') && `
 (curl -s $WEBAPP1_HOSTNAME | grep -q '$SEARCH_STRING' && echo $WEBAPP1_HOSTNAME ': curl - Success!' || echo $WEBAPP1_HOSTNAME ': curl - Failed!') && `

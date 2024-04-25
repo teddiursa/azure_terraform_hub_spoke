@@ -42,17 +42,34 @@ resource "azurerm_network_security_group" "spoke1_nsg" {
   location            = azurerm_resource_group.spoke1_rg.location
 }
 
-# Allow HTTPS traffic to workload subnet from mgmt subnet
+# Allow HTTP and HTTPS traffic to workload subnet from mgmt subnet
 
-resource "azurerm_network_security_rule" "https_rule" {
-  name                        = "AllowHTTPS"
+
+resource "azurerm_network_security_rule" "web_rule" {
+  name                        = "AllowWeb"
   priority                    = 100
   direction                   = "Inbound"
   access                      = "Allow"
   protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_range      = "443"
+  destination_port_ranges     = ["80", "443"]
   source_address_prefix       = var.office_mgmt_subnet_prefix
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.spoke1_rg.name
+  network_security_group_name = azurerm_network_security_group.spoke1_nsg.name
+}
+
+# Block HTTP and HTTPS from all other networks
+
+resource "azurerm_network_security_rule" "http_rule" {
+  name                        = "BlockWeb"
+  priority                    = 110
+  direction                   = "Inbound"
+  access                      = "Deny"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_ranges     = ["80", "443"]
+  source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.spoke1_rg.name
   network_security_group_name = azurerm_network_security_group.spoke1_nsg.name
