@@ -33,3 +33,18 @@ output "sql_private_endpoint" {
   description = "IP address of the sql private endpoint"
   value       = azurerm_private_endpoint.sql_private_endpoint.private_service_connection[0].private_ip_address
 }
+
+output "spoke2_vm_hostname" {
+  description = "Hostname of the spoke2 vm"
+  value       = "${azurerm_private_dns_a_record.spoke2_vm_a_record.name}.${azurerm_private_dns_a_record.spoke2_vm_a_record.zone_name}"
+}
+
+output "hub_vm_hostname" {
+  description = "Hostname of the hub vm"
+  value       = "${azurerm_private_dns_a_record.hub_vm_a_record.name}.${azurerm_private_dns_a_record.hub_vm_a_record.zone_name}"
+}
+
+output "offic_vm_1_hostname" {
+  description = "Hostname of the office vm 1"
+  value       = "${azurerm_private_dns_a_record.office_vm_a_record.name}.${azurerm_private_dns_a_record.office_vm_a_record.zone_name}"
+}
