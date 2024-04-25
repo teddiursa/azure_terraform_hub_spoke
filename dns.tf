@@ -86,7 +86,7 @@ resource "azurerm_private_dns_a_record" "sql_scm_record" {
 
 # Create a default DNS Zone
 resource "azurerm_private_dns_zone" "default_dns_zone" {
-  name                = "privatelink.azurewebsites.net"
+  name                = "azurewebsites.net"
   resource_group_name = azurerm_resource_group.office_rg.name
 }
 
