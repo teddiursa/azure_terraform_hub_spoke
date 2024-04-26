@@ -36,10 +36,17 @@ variable "azure_user" {
 }
 
 variable "shared_key" {
-  description = "Public IP of my home"
+  description = "SSH key for VPN gateways"
   type        = string
   sensitive   = true
 }
+
+variable "domain_name" {
+  type        = string
+  description = "Domain name"
+}
+
+# Variables with default values
 
 variable "vmsize" {
   description = "Size of the VMs"
@@ -56,11 +63,6 @@ variable "resource_cloud_group_location" {
   type        = string
   default     = "eastus"
   description = "Location of the resource group."
-}
-
-variable "domain_name" {
-  type        = string
-  description = "Domain name"
 }
 
 # variable "resource_group_name_prefix" {

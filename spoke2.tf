@@ -99,11 +99,15 @@ resource "azurerm_network_security_rule" "spoke2_block_ssh_rule" {
 }
 
 
-resource "azurerm_subnet_network_security_group_association" "spoke2_nsg_assoc" {
+resource "azurerm_subnet_network_security_group_association" "spoke2_workload_nsg_assoc" {
   subnet_id                 = azurerm_subnet.spoke2_workload.id
   network_security_group_id = azurerm_network_security_group.spoke2_nsg.id
 }
 
+resource "azurerm_subnet_network_security_group_association" "spoke2_mgmt_nsg_assoc" {
+  subnet_id                 = azurerm_subnet.spoke2_mgmt.id
+  network_security_group_id = azurerm_network_security_group.spoke2_nsg.id
+}
 
 resource "azurerm_virtual_network_peering" "spoke2_hub_peer" {
   name                      = "spoke2-hub-peer-${random_pet.pet.id}"

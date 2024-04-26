@@ -104,8 +104,13 @@ resource "azurerm_network_security_rule" "spoke1_block_ssh_rule" {
   network_security_group_name = azurerm_network_security_group.spoke1_nsg.name
 }
 
-resource "azurerm_subnet_network_security_group_association" "spoke1_nsg_assoc" {
+resource "azurerm_subnet_network_security_group_association" "spoke1_workload_nsg_assoc" {
   subnet_id                 = azurerm_subnet.spoke1_workload.id
+  network_security_group_id = azurerm_network_security_group.spoke1_nsg.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "spoke1_mgmt_nsg_assoc" {
+  subnet_id                 = azurerm_subnet.spoke1_mgmt.id
   network_security_group_id = azurerm_network_security_group.spoke1_nsg.id
 }
 
