@@ -1,4 +1,7 @@
-# Sensitive variables stored in secret.tfvars
+# Variables for easier configuration
+
+# Sensitive variables are stored in secret.tfvars, but defined here
+
 variable "subscription_id" {
   description = "Azure subscription ID"
   type        = string
@@ -65,13 +68,6 @@ variable "resource_cloud_group_location" {
   description = "Location of the resource group."
 }
 
-# variable "resource_group_name_prefix" {
-#   type        = string
-#   default     = "rg"
-#   description = "Prefix of the resource group name that's combined with a random ID so name is unique in your Azure subscription."
-# }
-
-
 # Office network address space
 
 variable "office_vnet_prefix" {
@@ -129,6 +125,8 @@ variable "hub_dmz_subnet_prefix" {
   type        = string
   default     = "10.0.0.32/27"
 }
+
+# This IP address should be in the DMZ subnet
 
 variable "hub_nva_ip" {
   description = "Address for hub-nva-nic"
