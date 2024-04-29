@@ -180,7 +180,6 @@ You can query the logs a [few different ways](https://learn.microsoft.com/en-us/
 My main commands were:
 - for all logs within 24 hours:
 	- ```kql
-		 all
 		union *
 		| where TimeGenerated > ago(24h)
 		```
